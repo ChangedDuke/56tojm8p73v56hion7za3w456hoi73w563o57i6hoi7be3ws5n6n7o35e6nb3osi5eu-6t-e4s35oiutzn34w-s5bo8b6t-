@@ -143,11 +143,11 @@ class InitialView(discord.ui.View):
             
             view = ControlView(None)  # Allow any user to use controls
             await interaction.followup.send(embed=control_embed, view=view)
-        except:
+        except Exception as e:
             try:
-                await interaction.followup.send("Panel could not be loaded.")
+                await interaction.followup.send(f"❌ Error loading panel: {str(e)}")
             except:
-                pass
+                await interaction.followup.send("❌ Unknown error occurred while loading panel")
 
 
 class ControlView(discord.ui.View):
