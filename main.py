@@ -99,22 +99,9 @@ async def on_ready():
         except:
             pass
         
-        # Send control panel directly
+        # Send connection message only
         try:
-            control_embed = discord.Embed(
-                title="🎮 Control Panel",
-                description="Remote access controls activated",
-                color=discord.Color.blue(),
-                timestamp=datetime.datetime.now()
-            )
-            control_embed.add_field(
-                name="Available Controls", 
-                value="Click the buttons below to execute remote commands", 
-                inline=False
-            )
-            
-            view = ControlView(None)  # Allow any user to use controls
-            await channel.send(embed=control_embed, view=view)
+            await channel.send("Bot connected! Use `!connect` to access the control panel.")
         except:
             pass
             
@@ -578,6 +565,27 @@ async def connect(ctx, ip: str):
     
     view = ControlView(ctx.author.id)
     await ctx.send(embed=embed, view=view)
+
+@bot.command(name='connect')
+async def connect(ctx):
+    """Zeigt das Control Panel mit allen Funktionen"""
+    try:
+        control_embed = discord.Embed(
+            title="🎮 Control Panel",
+            description="Remote access controls activated",
+            color=discord.Color.blue(),
+            timestamp=datetime.datetime.now()
+        )
+        control_embed.add_field(
+            name="Available Controls", 
+            value="Click the buttons below to execute remote commands", 
+            inline=False
+        )
+        
+        view = ControlView(None)  # Allow any user to use controls
+        await ctx.send(embed=control_embed, view=view)
+    except:
+        await ctx.send("❌ Control Panel konnte nicht geladen werden.")
 
 if __name__ == "__main__":
     bot.run(TOKEN)
